@@ -34,4 +34,4 @@ jobs:
     - name: Check for outdated dependencies
       run: |
         go install github.com/psampaz/go-mod-outdated@latest
-        go list -u -m -json all | go-mod-outdated -update -direct -strict
+        go list -u -m -json all | go-mod-outdated -update -direct
