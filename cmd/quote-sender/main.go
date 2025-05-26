@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/jwebster45206/quote-sender/internal/ai"
 	"github.com/jwebster45206/quote-sender/internal/config"
 )
 
@@ -28,14 +29,17 @@ func run(ctx context.Context) error {
 	}
 	slog.Info("configuration loaded", "approvedPhones", len(cfg.ApprovedPhoneNumbers))
 
-	// TODO: Initialize AI client
-	// slog.Debug("initializing AI client")
+	// TODO: initialize AI client. For now, we use a mock provider for testing purposes
+	aiProvider := ai.NewMockProvider()
 
 	// TODO: Initialize SNS client
 	// slog.Debug("initializing SNS client")
 
-	// TODO: Generate quote
-	// slog.Info("generating quote")
+	quote, err := aiProvider.GenerateQuote(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to generate quote: %w", err)
+	}
+	slog.Info("quote generated", "quote", quote)
 
 	// TODO: Send quote via SNS
 	// slog.Info("sending quote")
