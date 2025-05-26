@@ -12,7 +12,6 @@ import (
 // phoneRegex validates E.164 format: + followed by 1-15 digits
 var phoneRegex = regexp.MustCompile(`^\+[1-9]\d{1,14}$`)
 
-// SNSClient interface defines the required methods for an SNS client
 type SNSClient interface {
 	Publish(ctx context.Context, params *sns.PublishInput, optFns ...func(*sns.Options)) (*sns.PublishOutput, error)
 }
@@ -21,14 +20,12 @@ type SNSNotifier struct {
 	client SNSClient
 }
 
-// NewSNSNotifier creates a new SNS notifier
 func NewSNSNotifier(client SNSClient) *SNSNotifier {
 	return &SNSNotifier{
 		client: client,
 	}
 }
 
-// Send implements the Notifier interface for SNSNotifier
 func (s *SNSNotifier) Send(ctx context.Context, phoneNumber string, message string) error {
 	if !phoneRegex.MatchString(phoneNumber) {
 		return fmt.Errorf("invalid phone number format, must be in E.164 format (e.g., +1234567890)")
