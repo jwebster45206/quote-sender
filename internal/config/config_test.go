@@ -34,9 +34,9 @@ func TestLoadApp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.cleanupEnvVar {
-				os.Unsetenv("APPROVED_PHONE_NUMBERS")
+				os.Unsetenv("RECIPIENT_PHONE_NUMBERS")
 			} else {
-				os.Setenv("APPROVED_PHONE_NUMBERS", tt.phoneNumbers)
+				os.Setenv("RECIPIENT_PHONE_NUMBERS", tt.phoneNumbers)
 			}
 
 			cfg, err := LoadApp(context.Background())
@@ -53,7 +53,7 @@ func TestLoadApp(t *testing.T) {
 				return
 			}
 
-			if got := len(cfg.ApprovedPhoneNumbers); got != tt.expectedCount {
+			if got := len(cfg.RecipientPhoneNumbers); got != tt.expectedCount {
 				t.Errorf("expected %d phone numbers, got %d", tt.expectedCount, got)
 			}
 		})
