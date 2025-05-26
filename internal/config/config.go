@@ -17,7 +17,7 @@ type AppConfig struct {
 	AIProvider string
 	// OpenAI API key for the OpenAI provider
 	OpenAIAPIKey string
-	// OpenAI model to use (defaults to gpt-3.5-turbo if not set)
+	// OpenAI model to use
 	OpenAIModel string
 	// Notification provider to use (sns or mock)
 	NotificationProvider string
