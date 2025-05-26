@@ -7,22 +7,20 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/joho/godotenv"
 )
 
 type AppConfig struct {
 	// phone numbers that will receive messages
 	RecipientPhoneNumbers []string
-
-	// AI Provider config
-	AIProvider   string
+	// AI provider to use (openai or mock)
+	AIProvider string
+	// OpenAI API key for the OpenAI provider
 	OpenAIAPIKey string
-	OpenAIModel  string
-
-	// Notification Provider config
+	// OpenAI model to use (defaults to gpt-3.5-turbo if not set)
+	OpenAIModel string
+	// Notification provider to use (sns or mock)
 	NotificationProvider string
-	SNSTopicARN          string
 }
 
 const (
@@ -35,17 +33,6 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 	if err := godotenv.Load(); err != nil {
 		// We don't return an error here as .env file is optional
 		slog.Debug("no .env file found, using environment variables")
-	}
-
-	// Load AWS config to validate credentials
-	// This will use the default credential chain:
-	// - Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-	// - Shared credentials file (~/.aws/credentials)
-	// - IAM role (if running on EC2 or Lambda)
-	if _, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(AWSRegion),
-	); err != nil {
-		return nil, fmt.Errorf("unable to load AWS config: %w", err)
 	}
 
 	cfg := &AppConfig{}
@@ -79,14 +66,6 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 		cfg.NotificationProvider = "mock"
 	}
 
-	// Config SNS if using SNS provider
-	if cfg.NotificationProvider == "sns" {
-		cfg.SNSTopicARN = os.Getenv("SNS_TOPIC_ARN")
-		if cfg.SNSTopicARN == "" {
-			return nil, fmt.Errorf("SNS_TOPIC_ARN environment variable is required when using SNS provider")
-		}
-	}
-
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
@@ -95,7 +74,7 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 
 func (c *AppConfig) validate() error {
 	if len(c.RecipientPhoneNumbers) == 0 {
-		return fmt.Errorf("APPROVED_PHONE_NUMBERS is required")
+		return fmt.Errorf("RECIPIENT_PHONE_NUMBERS is required")
 	}
 	return nil
 }
