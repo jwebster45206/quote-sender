@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"os"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/jwebster45206/quote-sender/internal/ai"
 	"github.com/jwebster45206/quote-sender/internal/config"
 	"github.com/jwebster45206/quote-sender/internal/notification"
@@ -51,8 +53,13 @@ func run(ctx context.Context) error {
 	var notifier notification.Notifier
 	switch cfg.NotificationProvider {
 	case "sns":
-		// TODO: Implement SNS provider
-		return fmt.Errorf("SNS provider not yet implemented")
+		awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(config.AWSRegion))
+		if err != nil {
+			return fmt.Errorf("failed to load AWS config: %w", err)
+		}
+		snsClient := sns.NewFromConfig(awsCfg)
+		notifier = notification.NewSNSNotifier(snsClient)
+		slog.Info("using SNS notification provider")
 	default:
 		notifier = notification.NewMockNotifier()
 		slog.Info("using mock notification provider")
@@ -65,7 +72,7 @@ func run(ctx context.Context) error {
 	slog.Info("quote generated", "quote", quote)
 
 	for _, phone := range cfg.RecipientPhoneNumbers {
-		if err := notifier.Send(phone, quote); err != nil {
+		if err := notifier.Send(ctx, phone, quote); err != nil {
 			return fmt.Errorf("failed to send quote to %s: %w", phone, err)
 		}
 		slog.Info("quote sent", "phone", phone)
