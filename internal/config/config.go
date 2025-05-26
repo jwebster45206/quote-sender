@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 )
@@ -32,7 +33,11 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 
 	cfg := &AppConfig{}
 	if phones := os.Getenv("APPROVED_PHONE_NUMBERS"); phones != "" {
-		cfg.ApprovedPhoneNumbers = []string{phones} // TODO: split on comma
+		for _, phone := range strings.Split(phones, ",") {
+			if trimmed := strings.TrimSpace(phone); trimmed != "" {
+				cfg.ApprovedPhoneNumbers = append(cfg.ApprovedPhoneNumbers, trimmed)
+			}
+		}
 	}
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
