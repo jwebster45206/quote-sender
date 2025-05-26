@@ -17,7 +17,7 @@ Required:
 AI Configuration:
 - `AI_PROVIDER`: Set to `openai` to use OpenAI, defaults to `mock` if not set
 - `OPENAI_API_KEY`: Required when `AI_PROVIDER=openai`
-- `OPENAI_MODEL`: OpenAI model to use (e.g., `gpt-4-turbo-preview`, `gpt-3.5-turbo`). Defaults to `gpt-3.5-turbo`
+- `OPENAI_MODEL`: OpenAI model to use. Defaults to `gpt-4o-mini`
 
 AWS Configuration:
 - AWS credentials (any of):
