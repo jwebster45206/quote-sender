@@ -14,7 +14,6 @@ func NewMockProvider() Provider {
 	return &MockProvider{}
 }
 
-// GenerateQuote implements Provider interface
 func (m *MockProvider) GenerateQuote(ctx context.Context) (string, error) {
 	m.CallCount++
 	if m.NextError != nil {

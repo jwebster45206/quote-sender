@@ -13,13 +13,11 @@ type OpenAIProvider struct {
 	model  string
 }
 
-// OpenAIConfig holds configuration for the OpenAI provider
 type OpenAIConfig struct {
 	APIKey string
 	Model  string
 }
 
-// NewOpenAIProvider creates a new OpenAI provider
 func NewOpenAIProvider(config OpenAIConfig) Provider {
 	client := openai.NewClient(config.APIKey)
 	return &OpenAIProvider{
@@ -28,7 +26,6 @@ func NewOpenAIProvider(config OpenAIConfig) Provider {
 	}
 }
 
-// GenerateQuote implements the Provider interface
 func (p *OpenAIProvider) GenerateQuote(ctx context.Context) (string, error) {
 	resp, err := p.client.CreateChatCompletion(
 		ctx,
