@@ -8,6 +8,7 @@ import (
 
 	"github.com/jwebster45206/quote-sender/internal/ai"
 	"github.com/jwebster45206/quote-sender/internal/config"
+	"github.com/jwebster45206/quote-sender/internal/notification"
 )
 
 func main() {
@@ -27,7 +28,10 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	slog.Info("configuration loaded", "approvedPhones", len(cfg.ApprovedPhoneNumbers))
+	slog.Info("configuration loaded",
+		"recipients", len(cfg.RecipientPhoneNumbers),
+		"ai_provider", cfg.AIProvider,
+		"notification_provider", cfg.NotificationProvider)
 
 	// Initialize AI provider
 	var aiProvider ai.Provider
@@ -40,11 +44,19 @@ func run(ctx context.Context) error {
 		slog.Info("using OpenAI provider", "model", cfg.OpenAIModel)
 	default:
 		aiProvider = ai.NewMockProvider()
-		slog.Info("using mock provider")
+		slog.Info("using mock AI provider")
 	}
 
-	// TODO: Initialize SNS client
-	// slog.Debug("initializing SNS client")
+	// Initialize notification provider
+	var notifier notification.Notifier
+	switch cfg.NotificationProvider {
+	case "sns":
+		// TODO: Implement SNS provider
+		return fmt.Errorf("SNS provider not yet implemented")
+	default:
+		notifier = notification.NewMockNotifier()
+		slog.Info("using mock notification provider")
+	}
 
 	quote, err := aiProvider.GenerateQuote(ctx)
 	if err != nil {
@@ -52,8 +64,12 @@ func run(ctx context.Context) error {
 	}
 	slog.Info("quote generated", "quote", quote)
 
-	// TODO: Send quote via SNS
-	// slog.Info("sending quote")
+	for _, phone := range cfg.RecipientPhoneNumbers {
+		if err := notifier.Send(phone, quote); err != nil {
+			return fmt.Errorf("failed to send quote to %s: %w", phone, err)
+		}
+		slog.Info("quote sent", "phone", phone)
+	}
 
 	slog.Debug("application run completed successfully")
 	return nil

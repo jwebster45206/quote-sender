@@ -12,14 +12,17 @@ import (
 )
 
 type AppConfig struct {
-	// phone numbers that can receive messages
-	ApprovedPhoneNumbers []string
-	// AI provider to use (openai or mock)
-	AIProvider string
-	// OpenAI API key for the OpenAI provider
+	// phone numbers that will receive messages
+	RecipientPhoneNumbers []string
+
+	// AI Provider config
+	AIProvider   string
 	OpenAIAPIKey string
-	// OpenAI model to use (defaults to gpt-3.5-turbo if not set)
-	OpenAIModel string
+	OpenAIModel  string
+
+	// Notification Provider config
+	NotificationProvider string
+	SNSTopicARN          string
 }
 
 const (
@@ -46,10 +49,10 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 	}
 
 	cfg := &AppConfig{}
-	if phones := os.Getenv("APPROVED_PHONE_NUMBERS"); phones != "" {
+	if phones := os.Getenv("RECIPIENT_PHONE_NUMBERS"); phones != "" {
 		for _, phone := range strings.Split(phones, ",") {
 			if trimmed := strings.TrimSpace(phone); trimmed != "" {
-				cfg.ApprovedPhoneNumbers = append(cfg.ApprovedPhoneNumbers, trimmed)
+				cfg.RecipientPhoneNumbers = append(cfg.RecipientPhoneNumbers, trimmed)
 			}
 		}
 	}
@@ -71,6 +74,19 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 		}
 	}
 
+	cfg.NotificationProvider = strings.ToLower(os.Getenv("NOTIFICATION_PROVIDER"))
+	if cfg.NotificationProvider == "" {
+		cfg.NotificationProvider = "mock"
+	}
+
+	// Config SNS if using SNS provider
+	if cfg.NotificationProvider == "sns" {
+		cfg.SNSTopicARN = os.Getenv("SNS_TOPIC_ARN")
+		if cfg.SNSTopicARN == "" {
+			return nil, fmt.Errorf("SNS_TOPIC_ARN environment variable is required when using SNS provider")
+		}
+	}
+
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
@@ -78,7 +94,7 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 }
 
 func (c *AppConfig) validate() error {
-	if len(c.ApprovedPhoneNumbers) == 0 {
+	if len(c.RecipientPhoneNumbers) == 0 {
 		return fmt.Errorf("APPROVED_PHONE_NUMBERS is required")
 	}
 	return nil
