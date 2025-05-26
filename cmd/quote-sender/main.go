@@ -29,8 +29,19 @@ func run(ctx context.Context) error {
 	}
 	slog.Info("configuration loaded", "approvedPhones", len(cfg.ApprovedPhoneNumbers))
 
-	// TODO: initialize AI client. For now, we use a mock provider for testing purposes
-	aiProvider := ai.NewMockProvider()
+	// Initialize AI provider
+	var aiProvider ai.Provider
+	switch cfg.AIProvider {
+	case "openai":
+		aiProvider = ai.NewOpenAIProvider(ai.OpenAIConfig{
+			APIKey: cfg.OpenAIAPIKey,
+			Model:  cfg.OpenAIModel,
+		})
+		slog.Info("using OpenAI provider", "model", cfg.OpenAIModel)
+	default:
+		aiProvider = ai.NewMockProvider()
+		slog.Info("using mock provider")
+	}
 
 	// TODO: Initialize SNS client
 	// slog.Debug("initializing SNS client")

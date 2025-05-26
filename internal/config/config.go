@@ -3,15 +3,23 @@ package config
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/joho/godotenv"
 )
 
 type AppConfig struct {
 	// phone numbers that can receive messages
 	ApprovedPhoneNumbers []string
+	// AI provider to use (openai or mock)
+	AIProvider string
+	// OpenAI API key for the OpenAI provider
+	OpenAIAPIKey string
+	// OpenAI model to use (defaults to gpt-3.5-turbo if not set)
+	OpenAIModel string
 }
 
 const (
@@ -20,6 +28,12 @@ const (
 
 // LoadApp creates a new AppConfig from environment variables
 func LoadApp(ctx context.Context) (*AppConfig, error) {
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		// We don't return an error here as .env file is optional
+		slog.Debug("no .env file found, using environment variables")
+	}
+
 	// Load AWS config to validate credentials
 	// This will use the default credential chain:
 	// - Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
@@ -39,6 +53,24 @@ func LoadApp(ctx context.Context) (*AppConfig, error) {
 			}
 		}
 	}
+
+	cfg.AIProvider = strings.ToLower(os.Getenv("AI_PROVIDER"))
+	if cfg.AIProvider == "" {
+		cfg.AIProvider = "mock"
+	}
+
+	// Config OpenAI API if using OpenAI provider
+	if cfg.AIProvider == "openai" {
+		cfg.OpenAIAPIKey = os.Getenv("OPENAI_API_KEY")
+		if cfg.OpenAIAPIKey == "" {
+			return nil, fmt.Errorf("OPENAI_API_KEY environment variable is required when using OpenAI provider")
+		}
+		cfg.OpenAIModel = os.Getenv("OPENAI_MODEL")
+		if cfg.OpenAIModel == "" {
+			cfg.OpenAIModel = "gpt-4o-mini-2024-07-18"
+		}
+	}
+
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
